@@ -40,7 +40,7 @@ uploaded_file = st.file_uploader("📤 Unggah Gambar", type=["jpg","jpeg","png"]
 # ==========================
 if uploaded_file is not None:
     img = Image.open(uploaded_file)
-    st.image(img, caption="🖼 Gambar yang diunggah", use_column_width=True)
+    st.image(img, caption="🖼 Gambar yang diunggah", use_container_width=True)
     st.markdown("---")
 
     # ==========================
@@ -83,14 +83,15 @@ if uploaded_file is not None:
                     predicted_class = np.argmax(prediction)
                     confidence = np.max(prediction)
 
-                    # Tampilkan hasil prediksi
+                    # Hasil prediksi
                     st.success(f"Hasil Prediksi: Kelas {predicted_class} ({confidence*100:.2f}%)")
 
-                    # Tampilkan probabilitas semua kelas dalam diagram batang
+                    # Probabilitas semua kelas dalam diagram batang
                     st.write("Probabilitas semua kelas:")
                     class_probs = prediction[0]
                     classes = [f"Kelas {i}" for i in range(len(class_probs))]
 
+                    # Tampilkan diagram batang
                     fig, ax = plt.subplots()
                     ax.bar(classes, class_probs*100, color='skyblue')
                     ax.set_ylabel("Probabilitas (%)")
@@ -102,7 +103,7 @@ if uploaded_file is not None:
                     trainable_params = np.sum([tf.keras.backend.count_params(w) for w in classifier.trainable_weights])
                     non_trainable_params = total_params - trainable_params
 
-                    # Contoh fields (hardcode jika history tidak tersedia)
+                    # Fields tambahan (hardcode jika history tidak tersedia)
                     num_classes = classifier.output_shape[1] if len(classifier.output_shape) > 1 else 1
                     num_train = 1000  # jumlah dataset train
                     num_val = 200     # jumlah dataset validasi
