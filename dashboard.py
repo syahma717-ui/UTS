@@ -89,7 +89,6 @@ st.caption("© 2025 | Dashboard dibuat untuk Ujian Tengah Semester BIG DATA oleh
 # ==========================
 import streamlit as st
 import tensorflow as tf
-from tensorflow.keras.preprocessing import image
 import numpy as np
 from PIL import Image
 
@@ -117,9 +116,9 @@ st.markdown("Unggah gambar untuk diprediksi menggunakan model deep learning.")
 
 uploaded_file = st.file_uploader("📤 Unggah gambar di sini:", type=["jpg", "jpeg", "png"])
 
-if uploaded_file is not None:
+if uploaded_file is not None and model is not None:
     # Tampilkan gambar yang diunggah
-    img = Image.open(uploaded_file)
+    img = Image.open(uploaded_file).convert('RGB')  # pastikan RGB
     st.image(img, caption="Gambar yang diunggah", use_container_width=True)
 
     # ==========================
@@ -128,10 +127,10 @@ if uploaded_file is not None:
     st.write("🔄 Memproses gambar...")
 
     try:
-        img_resized = img.resize((224, 224))  # ubah ukuran sesuai model kamu
-        img_array = image.img_to_array(img_resized)
-        img_array = np.expand_dims(img_array, axis=0)
-        img_array = img_array / 255.0
+        # Resize dan normalisasi
+        img_resized = img.resize((224, 224))
+        img_array = np.array(img_resized).astype('float32') / 255.0
+        img_array = np.expand_dims(img_array, axis=0)  # Shape (1, 224, 224, 3)
 
         # ==========================
         # 📊 PREDIKSI
@@ -151,5 +150,7 @@ if uploaded_file is not None:
     except Exception as e:
         st.error(f"Terjadi kesalahan saat klasifikasi: {e}")
 else:
-    st.info("Silakan unggah gambar untuk memulai klasifikasi.")
-
+    if model is None:
+        st.error("Model belum berhasil dimuat.")
+    else:
+        st.info("Silakan unggah gambar untuk memulai klasifikasi.")
