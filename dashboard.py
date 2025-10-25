@@ -56,6 +56,7 @@ if uploaded_file is not None:
 
 elif menu == "🧬 Klasifikasi Gambar":
     if classifier is not None:
+        uploaded_file = st.file_uploader("📤 Unggah gambar di sini:", type=["jpg","jpeg","png"])
         if uploaded_file is not None:
             with st.spinner("🧠 Sedang mengklasifikasikan gambar..."):
                 try:
@@ -90,29 +91,34 @@ elif menu == "🧬 Klasifikasi Gambar":
                         img_array = np.expand_dims(img_array, axis=-1)
 
                     # Tambahkan batch dimension
-                    img_array = np.expand_dims(img_array, axis=0)  # Shape: (1,H,W,C)
+                    img_array = np.expand_dims(img_array, axis=0)  # shape: (1,H,W,C)
+
+                    # ==========================
+                    # Debug info
+                    # ==========================
+                    st.write("Shape input gambar:", img_array.shape)
+                    st.write("Input sample pixel:", img_array[0,0,0,:])
+                    st.image(img, caption="Gambar yang diunggah", use_column_width=True)
 
                     # ==========================
                     # Prediksi
                     # ==========================
-                    prediction = classifier.predict(img_array)  # shape (1, num_classes)
+                    prediction = classifier.predict(img_array)
                     predicted_class = np.argmax(prediction)
                     confidence = np.max(prediction)
 
                     # ==========================
-                    # Tampilkan gambar dan hasil prediksi
+                    # Tampilkan hasil
                     # ==========================
-                    st.image(img, caption="Gambar yang diunggah", use_column_width=True)
-                    st.success(f"Hasil Prediksi: **Kelas {predicted_class}**")
-                    st.write(f"Tingkat Kepercayaan Kelas Terpilih: **{confidence:.2f}**")
+                    st.success(f"Hasil Prediksi: Kelas {predicted_class}")
+                    st.write(f"Tingkat Kepercayaan Kelas Terpilih: {confidence:.2f}")
 
                     # ==========================
-                    # Tampilkan probabilitas semua kelas
+                    # Probabilitas semua kelas
                     # ==========================
-                    st.write("Probabilitas untuk semua kelas:")
-                    num_classes = prediction.shape[1]
-                    for i in range(num_classes):
-                        st.write(f"Kelas {i}: {prediction[0, i]:.4f}")
+                    st.write("Probabilitas semua kelas:")
+                    for i in range(prediction.shape[1]):
+                        st.write(f"Kelas {i}: {prediction[0,i]:.4f}")
 
                     # ==========================
                     # Statistik model
@@ -132,6 +138,7 @@ elif menu == "🧬 Klasifikasi Gambar":
             st.info("Silakan unggah gambar untuk memulai klasifikasi.")
     else:
         st.error("Model classifier belum berhasil dimuat.")
+
   
 # ==========================
 # 📚 FOOTER
