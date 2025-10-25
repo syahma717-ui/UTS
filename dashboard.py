@@ -98,7 +98,6 @@ from PIL import Image
 @st.cache_resource
 def load_model():
     try:
-        # Ganti path sesuai lokasi model kamu
         model = tf.keras.models.load_model("model/Syahma_Laporan_4.h5")
         return model
     except Exception as e:
@@ -118,37 +117,50 @@ uploaded_file = st.file_uploader("📤 Unggah gambar di sini:", type=["jpg", "jp
 
 if uploaded_file is not None and model is not None:
     try:
-        # ==========================
-        # 🔍 LOAD & PREPROCESSING
-        # ==========================
         img = Image.open(uploaded_file)
 
-        # Sesuaikan jumlah channel sesuai model
-        if model.input_shape[-1] == 3:
+        # ==========================
+        # 🔍 Ambil ukuran input model
+        # ==========================
+        _, model_height, model_width, model_channels = model.input_shape
+
+        # ==========================
+        # ⚙️ Sesuaikan channel
+        # ==========================
+        if model_channels == 3:
             img = img.convert('RGB')
-        elif model.input_shape[-1] == 1:
+        elif model_channels == 1:
             img = img.convert('L')
 
-        # Ambil ukuran input model
-        target_size = (model.input_shape[1], model.input_shape[2])
-        img_resized = img.resize(target_size)
+        # ==========================
+        # ⚙️ Resize sesuai model
+        # ==========================
+        img_resized = img.resize((model_width, model_height))
 
-        # Konversi ke array, normalisasi, dan tambahkan dimensi batch
+        # ==========================
+        # ⚙️ Konversi ke array, normalisasi
+        # ==========================
         img_array = np.array(img_resized).astype('float32') / 255.0
-        if img_array.ndim == 2:  # jika grayscale, tambahkan channel axis
+
+        # Jika grayscale, tambahkan channel axis
+        if model_channels == 1 and img_array.ndim == 2:
             img_array = np.expand_dims(img_array, axis=-1)
+
+        # Tambahkan dimensi batch
         img_array = np.expand_dims(img_array, axis=0)  # Shape (1,H,W,C)
 
-        # Tampilkan gambar
+        # ==========================
+        # ⚠️ Debug info
+        # ==========================
+        st.write("Input shape model:", model.input_shape)
+        st.write("Shape input gambar:", img_array.shape)
         st.image(img, caption="Gambar yang diunggah", use_container_width=True)
         st.write("🔄 Memproses gambar...")
 
         # ==========================
         # 📊 PREDIKSI
         # ==========================
-        st.write("🧩 Mengklasifikasi gambar...")
         prediction = model.predict(img_array)
-
         predicted_class = np.argmax(prediction)
         confidence = np.max(prediction)
 
@@ -158,14 +170,9 @@ if uploaded_file is not None and model is not None:
         st.success(f"Hasil Prediksi: **Kelas {predicted_class}**")
         st.write(f"Tingkat Kepercayaan: **{confidence:.2f}**")
 
-        # ==========================
-        # ⚠️ Debug Info (Opsional)
-        # ==========================
-        st.info(f"Input shape model: {model.input_shape}")
-        st.info(f"Shape input gambar: {img_array.shape}")
-
     except Exception as e:
         st.error(f"Terjadi kesalahan saat klasifikasi: {e}")
+
 else:
     if model is None:
         st.error("Model belum berhasil dimuat.")
