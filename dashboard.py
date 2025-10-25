@@ -50,83 +50,36 @@ if uploaded_file is not None:
         else:
             st.warning("Model YOLO belum berhasil dimuat!")
 
-   if uploaded_file is not None and classifier is not None:
+  uploaded_file = st.file_uploader("📤 Unggah gambar:", type=["jpg","jpeg","png"])
+
+if uploaded_file is not None and classifier is not None:
     img = Image.open(uploaded_file)
     st.image(img, caption="Gambar yang diunggah", use_column_width=True)
 
     try:
-        # Ambil input shape model
         H, W, C = classifier.input_shape[1:4]
-
-        # Sesuaikan channel
         if C == 3:
             img = img.convert('RGB')
         elif C == 1:
             img = img.convert('L')
 
-        # Resize & preprocessing
         img_resized = img.resize((W, H))
         img_array = np.array(img_resized).astype('float32') / 255.0
         if C == 1 and img_array.ndim == 2:
             img_array = np.expand_dims(img_array, axis=-1)
         img_array = np.expand_dims(img_array, axis=0)
 
-        # Predict
         prediction = classifier.predict(img_array)
         predicted_class = np.argmax(prediction)
         confidence = np.max(prediction)
 
-        # ==========================
-        # Hasil prediksi dalam persen
-        # ==========================
         st.success(f"Hasil Prediksi: Kelas {predicted_class} ({confidence*100:.2f}%)")
-
-        # ==========================
-        # Probabilitas semua kelas dalam diagram
-        # ==========================
-        st.write("Probabilitas semua kelas:")
-        class_probs = prediction[0]
-        classes = [f"Kelas {i}" for i in range(len(class_probs))]
-
-        # Tampilkan tabel
-        for i, p in enumerate(class_probs):
-            st.write(f"{classes[i]}: {p*100:.2f}%")
-
-        # Diagram batang
-        fig, ax = plt.subplots()
-        ax.bar(classes, class_probs*100, color='skyblue')
-        ax.set_ylabel("Probabilitas (%)")
-        ax.set_title("Probabilitas Semua Kelas")
-        st.pyplot(fig)
-
-        # ==========================
-        # Statistik model (fields)
-        # ==========================
-        total_params = classifier.count_params()
-        trainable_params = np.sum([tf.keras.backend.count_params(w) for w in classifier.trainable_weights])
-        non_trainable_params = total_params - trainable_params
-
-        # Tambahan: jumlah kelas & dataset (hardcode atau ambil dari metadata)
-        num_classes = classifier.output_shape[1] if len(classifier.output_shape) > 1 else 1
-        num_train = 1000  # contoh jumlah data train
-        num_val = 200     # contoh jumlah data val
-        train_acc = 0.92  # contoh akurasi train
-        val_acc = 0.88    # contoh akurasi validasi
-
-        st.write("📊 Statistik Model:")
-        st.write(f"Jumlah dataset train: {num_train}")
-        st.write(f"Jumlah dataset validasi: {num_val}")
-        st.write(f"Jumlah kelas: {num_classes}")
-        st.write(f"Akurasi training: {train_acc*100:.2f}%")
-        st.write(f"Akurasi validasi: {val_acc*100:.2f}%")
-        st.write(f"Total parameter: {total_params}")
-        st.write(f"Trainable parameter: {trainable_params}")
-        st.write(f"Non-trainable parameter: {non_trainable_params}")
 
     except Exception as e:
         st.error(f"Terjadi kesalahan saat klasifikasi: {e}")
 else:
     st.info("Silakan unggah gambar untuk memulai klasifikasi.")
+
   
 # ==========================
 # 📚 FOOTER
