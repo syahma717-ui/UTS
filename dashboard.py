@@ -27,7 +27,7 @@ st.set_page_config(
 )
 
 st.title("🧠 Dashboard Deteksi & Klasifikasi Gambar")
-st.markdown("*Dibuat oleh Syahma — Laporan 4 BIG DATA*")
+st.markdown("*Dibuat oleh Syahma — Ujuan Tengah Semester BIG DATA*")
 st.markdown("---")
 # ==========================
 # 🧭 SIDEBAR MENU
@@ -54,28 +54,56 @@ if uploaded_file is not None:
         else:
             st.warning("Model YOLO belum berhasil dimuat!")
 
-    elif menu == "🧬 Klasifikasi Gambar":
-        if classifier is not None:
+elif menu == "🧬 Klasifikasi Gambar":
+    if classifier is not None:
+        if uploaded_file is not None:
             with st.spinner("🧠 Sedang mengklasifikasikan gambar..."):
-                # Preprocessing
-                img_resized = img.resize((224, 224))  # sesuaikan ukuran dengan model kamu
-                img_array = image.img_to_array(img_resized)
-                img_array = np.expand_dims(img_array, axis=0)
-                img_array = img_array / 255.0
+                try:
+                    # Load gambar
+                    img = Image.open(uploaded_file)
 
-                # Prediksi
-                prediction = classifier.predict(img_array)
-                class_index = np.argmax(prediction)
-                confidence = np.max(prediction)
+                    # Ambil ukuran input model
+                    target_height = classifier.input_shape[1]
+                    target_width = classifier.input_shape[2]
+                    target_channels = classifier.input_shape[3]
 
-                st.success("✅ Klasifikasi Berhasil!")
-                st.write("### Hasil Prediksi:", class_index)
-                st.write("Probabilitas:", f"{confidence:.2f}")
+                    # Sesuaikan channel
+                    if target_channels == 3:
+                        img = img.convert('RGB')
+                    elif target_channels == 1:
+                        img = img.convert('L')
+
+                    # Resize sesuai model
+                    img_resized = img.resize((target_width, target_height))
+
+                    # Konversi ke array, normalisasi
+                    img_array = np.array(img_resized).astype('float32') / 255.0
+
+                    # Tambahkan channel axis jika grayscale
+                    if target_channels == 1 and img_array.ndim == 2:
+                        img_array = np.expand_dims(img_array, axis=-1)
+
+                    # Tambahkan dimensi batch
+                    img_array = np.expand_dims(img_array, axis=0)  # shape: (1,H,W,C)
+
+                    # Prediksi
+                    prediction = classifier.predict(img_array)
+                    predicted_class = np.argmax(prediction)
+                    confidence = np.max(prediction)
+
+                    # Tampilkan hasil
+                    st.image(img, caption="Gambar yang diunggah", use_column_width=True)
+                    st.success(f"Hasil Prediksi: **Kelas {predicted_class}**")
+                    st.write(f"Tingkat Kepercayaan: **{confidence:.2f}**")
+
+                except Exception as e:
+                    st.error(f"Terjadi kesalahan saat klasifikasi: {e}")
         else:
-            st.warning("Model klasifikasi belum berhasil dimuat!")
-else:
-    st.info("Silakan unggah gambar terlebih dahulu untuk memulai.")
-    
+            st.info("Silakan unggah gambar untuk memulai klasifikasi.")
+    else:
+        st.error("Model classifier belum berhasil dimuat.")
+
+
   
 # ==========================
 # 📚 FOOTER
@@ -83,98 +111,3 @@ else:
 st.markdown("---")
 st.caption("© 2025 | Dashboard dibuat untuk Ujian Tengah Semester BIG DATA oleh Syahma")
 
-
-# ==========================
-# 📦 IMPORT LIBRARY
-# ==========================
-import streamlit as st
-import tensorflow as tf
-import numpy as np
-from PIL import Image
-
-# ==========================
-# ⚙️ LOAD MODEL
-# ==========================
-@st.cache_resource
-def load_model():
-    try:
-        model = tf.keras.models.load_model("model/Syahma_Laporan_4.h5")
-        return model
-    except Exception as e:
-        st.error(f"Gagal memuat model klasifikasi: {e}")
-        return None
-
-model = load_model()
-
-# ==========================
-# 🎨 UI DASHBOARD
-# ==========================
-st.set_page_config(page_title="Klasifikasi Gambar", page_icon="🧠", layout="centered")
-st.title("🧠 Aplikasi Klasifikasi Gambar")
-st.markdown("Unggah gambar untuk diprediksi menggunakan model deep learning.")
-
-uploaded_file = st.file_uploader("📤 Unggah gambar di sini:", type=["jpg", "jpeg", "png"])
-
-if uploaded_file is not None and model is not None:
-    try:
-        img = Image.open(uploaded_file)
-
-        # ==========================
-        # 🔍 Ambil ukuran input model
-        # ==========================
-        _, model_height, model_width, model_channels = model.input_shape
-
-        # ==========================
-        # ⚙️ Sesuaikan channel
-        # ==========================
-        if model_channels == 3:
-            img = img.convert('RGB')
-        elif model_channels == 1:
-            img = img.convert('L')
-
-        # ==========================
-        # ⚙️ Resize sesuai model
-        # ==========================
-        img_resized = img.resize((model_width, model_height))
-
-        # ==========================
-        # ⚙️ Konversi ke array, normalisasi
-        # ==========================
-        img_array = np.array(img_resized).astype('float32') / 255.0
-
-        # Jika grayscale, tambahkan channel axis
-        if model_channels == 1 and img_array.ndim == 2:
-            img_array = np.expand_dims(img_array, axis=-1)
-
-        # Tambahkan dimensi batch
-        img_array = np.expand_dims(img_array, axis=0)  # Shape (1,H,W,C)
-
-        # ==========================
-        # ⚠️ Debug info
-        # ==========================
-        st.write("Input shape model:", model.input_shape)
-        st.write("Shape input gambar:", img_array.shape)
-        st.image(img, caption="Gambar yang diunggah", use_container_width=True)
-        st.write("🔄 Memproses gambar...")
-
-        # ==========================
-        # 📊 PREDIKSI
-        # ==========================
-        prediction = model.predict(img_array)
-        predicted_class = np.argmax(prediction)
-        confidence = np.max(prediction)
-
-        # ==========================
-        # 💬 HASIL
-        # ==========================
-        st.success(f"Hasil Prediksi: **Kelas {predicted_class}**")
-        st.write(f"Tingkat Kepercayaan: **{confidence:.2f}**")
-
-    except Exception as e:
-        st.error(f"Terjadi kesalahan saat klasifikasi: {e}")
-
-else:
-    if model is None:
-        st.error("Model belum berhasil dimuat.")
-    else:
-        st.info("Silakan unggah gambar untuk memulai klasifikasi.")
