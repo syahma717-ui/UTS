@@ -18,19 +18,6 @@ def load_models():
 yolo_model, classifier = load_models()
 
 # ==========================
-#Load Models Klasifikasi
-# ==========================
-@st.cache_resource
-def load_model():
-    try:
-        model = tf.keras.models.load_model("model/Syahma_Laporan_4.h5")
-        return model
-    except Exception as e:
-        st.error(f"Gagal memuat model klasifikasi: {e}")
-        return None
-
-model = load_model()
-# ==========================
 # 🖥 STREAMLIT UI Deteksi
 # ==========================
 st.set_page_config(
@@ -42,21 +29,6 @@ st.set_page_config(
 st.title("🧠 Dashboard Deteksi & Klasifikasi Gambar")
 st.markdown("*Dibuat oleh Syahma — Laporan 4 BIG DATA*")
 st.markdown("---")
-
-# ==========================
-# 🎨 UI DASHBOARD Klasifikasi
-# ==========================
-st.set_page_config(page_title="Klasifikasi Gambar", page_icon="🧠", layout="centered")
-st.title("🧠 Aplikasi Klasifikasi Gambar")
-st.markdown("Unggah gambar untuk diprediksi menggunakan model deep learning.")
-
-uploaded_file = st.file_uploader("📤 Unggah gambar di sini:", type=["jpg", "jpeg", "png"])
-
-if uploaded_file is not None:
-    # Tampilkan gambar yang diunggah
-    img = Image.open(uploaded_file)
-    st.image(img, caption="Gambar yang diunggah", use_container_width=True)
-
 # ==========================
 # 🧭 SIDEBAR MENU
 # ==========================
@@ -104,37 +76,7 @@ if uploaded_file is not None:
 else:
     st.info("Silakan unggah gambar terlebih dahulu untuk memulai.")
     
-    # ==========================
-    # 🔍 PREPROCESSING Klasifikasi
-    # ==========================
-    st.write("🔄 Memproses gambar...")
-
-    try:
-        img_resized = img.resize((224, 224))  # ubah ukuran sesuai model kamu
-        img_array = image.img_to_array(img_resized)
-        img_array = np.expand_dims(img_array, axis=0)
-        img_array = img_array / 255.0
-
-    # ==========================
-        # 📊 PREDIKSI
-        # ==========================
-        st.write("🧩 Mengklasifikasi gambar...")
-
-        prediction = model.predict(img_array)
-        predicted_class = np.argmax(prediction)
-        confidence = np.max(prediction)
-
-        # ==========================
-        # 💬 HASIL
-        # ==========================
-        st.success(f"Hasil Prediksi: **Kelas {predicted_class}**")
-        st.write(f"Tingkat Kepercayaan: **{confidence:.2f}**")
-
-    except Exception as e:
-        st.error(f"Terjadi kesalahan saat klasifikasi: {e}")
-else:
-    st.info("Silakan unggah gambar untuk memulai klasifikasi.")
-
+  
 # ==========================
 # 📚 FOOTER
 # ==========================
