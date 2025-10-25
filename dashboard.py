@@ -81,4 +81,4 @@ else:
 # 📚 FOOTER
 # ==========================
 st.markdown("---")
-st.caption("© 2025 | Dashboard dibuat untuk Laporan 4 BIG DATA oleh Syahma")
+st.caption("© 2025 | Dashboard dibuat untuk Ujian Tengah Semester BIG DATA oleh Syahma")
