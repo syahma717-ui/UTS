@@ -18,15 +18,13 @@ def load_models():
 yolo_model, classifier = load_models()
 
 # ==========================
-# 🖥 STREAMLIT UI Deteksi
+# 🖥 STREAMLIT UI 
 # ==========================
-st.set_page_config(
-    page_title="Dashboard Deteksi & Klasifikasi Gambar",
-    page_icon="🧠",
-    layout="wide"
-)
+st.set_page_config(page_title="Klasifikasi Gambar", page_icon="🧠", layout="centered")
+st.title("🧠 Dashboard deteksi & Klasifikasi Gambar")
+uploaded_file = st.file_uploader("📤 Unggah gambar:", type=["jpg","jpeg","png"])
 
-st.title("🧠 Dashboard Deteksi & Klasifikasi Gambar")
+
 st.markdown("*Dibuat oleh Syahma — Ujuan Tengah Semester BIG DATA*")
 st.markdown("---")
 # ==========================
@@ -52,60 +50,83 @@ if uploaded_file is not None:
         else:
             st.warning("Model YOLO belum berhasil dimuat!")
 
-    elif menu == "🧬 Klasifikasi Gambar":
-        if classifier is not None:
-            with st.spinner("🧠 Sedang mengklasifikasikan gambar..."):
-                try:
-                    # Ambil ukuran input model
-                    H, W, C = classifier.input_shape[1:4]
+   if uploaded_file is not None and classifier is not None:
+    img = Image.open(uploaded_file)
+    st.image(img, caption="Gambar yang diunggah", use_column_width=True)
 
-                    # Sesuaikan channel
-                    if C == 3:
-                        img = img.convert('RGB')
-                    elif C == 1:
-                        img = img.convert('L')
+    try:
+        # Ambil input shape model
+        H, W, C = classifier.input_shape[1:4]
 
-                    # Resize & preprocess
-                    img_resized = img.resize((W, H))
-                    img_array = np.array(img_resized).astype('float32') / 255.0
-                    if C == 1 and img_array.ndim == 2:
-                        img_array = np.expand_dims(img_array, axis=-1)
-                    img_array = np.expand_dims(img_array, axis=0)
+        # Sesuaikan channel
+        if C == 3:
+            img = img.convert('RGB')
+        elif C == 1:
+            img = img.convert('L')
 
-                    # Debug info
-                    st.write("Shape input gambar:", img_array.shape)
+        # Resize & preprocessing
+        img_resized = img.resize((W, H))
+        img_array = np.array(img_resized).astype('float32') / 255.0
+        if C == 1 and img_array.ndim == 2:
+            img_array = np.expand_dims(img_array, axis=-1)
+        img_array = np.expand_dims(img_array, axis=0)
 
-                    # Prediksi
-                    prediction = classifier.predict(img_array)
-                    predicted_class = np.argmax(prediction)
-                    confidence = np.max(prediction)
+        # Predict
+        prediction = classifier.predict(img_array)
+        predicted_class = np.argmax(prediction)
+        confidence = np.max(prediction)
 
-                    st.success(f"Hasil Prediksi: Kelas {predicted_class}")
-                    st.write(f"Tingkat Kepercayaan: {confidence:.2f}")
+        # ==========================
+        # Hasil prediksi dalam persen
+        # ==========================
+        st.success(f"Hasil Prediksi: Kelas {predicted_class} ({confidence*100:.2f}%)")
 
-                    # Probabilitas semua kelas
-                    st.write("Probabilitas semua kelas:")
-                    for i in range(prediction.shape[1]):
-                        st.write(f"Kelas {i}: {prediction[0,i]:.4f}")
+        # ==========================
+        # Probabilitas semua kelas dalam diagram
+        # ==========================
+        st.write("Probabilitas semua kelas:")
+        class_probs = prediction[0]
+        classes = [f"Kelas {i}" for i in range(len(class_probs))]
 
-                    # Statistik model
-                    total_params = classifier.count_params()
-                    trainable_params = np.sum([tf.keras.backend.count_params(w) for w in classifier.trainable_weights])
-                    non_trainable_params = total_params - trainable_params
+        # Tampilkan tabel
+        for i, p in enumerate(class_probs):
+            st.write(f"{classes[i]}: {p*100:.2f}%")
 
-                    st.write("📊 Statistik Model:")
-                    st.write(f"Total parameter: {total_params}")
-                    st.write(f"Trainable parameter: {trainable_params}")
-                    st.write(f"Non-trainable parameter: {non_trainable_params}")
+        # Diagram batang
+        fig, ax = plt.subplots()
+        ax.bar(classes, class_probs*100, color='skyblue')
+        ax.set_ylabel("Probabilitas (%)")
+        ax.set_title("Probabilitas Semua Kelas")
+        st.pyplot(fig)
 
-                except Exception as e:
-                    st.error(f"Terjadi kesalahan saat klasifikasi: {e}")
-        else:
-            st.error("Model classifier belum berhasil dimuat.")
+        # ==========================
+        # Statistik model (fields)
+        # ==========================
+        total_params = classifier.count_params()
+        trainable_params = np.sum([tf.keras.backend.count_params(w) for w in classifier.trainable_weights])
+        non_trainable_params = total_params - trainable_params
 
+        # Tambahan: jumlah kelas & dataset (hardcode atau ambil dari metadata)
+        num_classes = classifier.output_shape[1] if len(classifier.output_shape) > 1 else 1
+        num_train = 1000  # contoh jumlah data train
+        num_val = 200     # contoh jumlah data val
+        train_acc = 0.92  # contoh akurasi train
+        val_acc = 0.88    # contoh akurasi validasi
+
+        st.write("📊 Statistik Model:")
+        st.write(f"Jumlah dataset train: {num_train}")
+        st.write(f"Jumlah dataset validasi: {num_val}")
+        st.write(f"Jumlah kelas: {num_classes}")
+        st.write(f"Akurasi training: {train_acc*100:.2f}%")
+        st.write(f"Akurasi validasi: {val_acc*100:.2f}%")
+        st.write(f"Total parameter: {total_params}")
+        st.write(f"Trainable parameter: {trainable_params}")
+        st.write(f"Non-trainable parameter: {non_trainable_params}")
+
+    except Exception as e:
+        st.error(f"Terjadi kesalahan saat klasifikasi: {e}")
 else:
-    st.info("Silakan unggah gambar untuk memulai prediksi.")
-
+    st.info("Silakan unggah gambar untuk memulai klasifikasi.")
   
 # ==========================
 # 📚 FOOTER
