@@ -59,42 +59,72 @@ elif menu == "🧬 Klasifikasi Gambar":
         if uploaded_file is not None:
             with st.spinner("🧠 Sedang mengklasifikasikan gambar..."):
                 try:
+                    # ==========================
                     # Load gambar
+                    # ==========================
                     img = Image.open(uploaded_file)
 
+                    # ==========================
                     # Ambil ukuran input model
+                    # ==========================
                     target_height = classifier.input_shape[1]
                     target_width = classifier.input_shape[2]
                     target_channels = classifier.input_shape[3]
 
+                    # ==========================
                     # Sesuaikan channel
+                    # ==========================
                     if target_channels == 3:
                         img = img.convert('RGB')
                     elif target_channels == 1:
                         img = img.convert('L')
 
-                    # Resize sesuai model
+                    # ==========================
+                    # Resize dan preprocessing
+                    # ==========================
                     img_resized = img.resize((target_width, target_height))
-
-                    # Konversi ke array, normalisasi
                     img_array = np.array(img_resized).astype('float32') / 255.0
 
-                    # Tambahkan channel axis jika grayscale
+                    # Jika grayscale, tambahkan channel axis
                     if target_channels == 1 and img_array.ndim == 2:
                         img_array = np.expand_dims(img_array, axis=-1)
 
-                    # Tambahkan dimensi batch
-                    img_array = np.expand_dims(img_array, axis=0)  # shape: (1,H,W,C)
+                    # Tambahkan batch dimension
+                    img_array = np.expand_dims(img_array, axis=0)  # Shape: (1,H,W,C)
 
+                    # ==========================
                     # Prediksi
-                    prediction = classifier.predict(img_array)
+                    # ==========================
+                    prediction = classifier.predict(img_array)  # shape (1, num_classes)
                     predicted_class = np.argmax(prediction)
                     confidence = np.max(prediction)
 
-                    # Tampilkan hasil
+                    # ==========================
+                    # Tampilkan gambar dan hasil prediksi
+                    # ==========================
                     st.image(img, caption="Gambar yang diunggah", use_column_width=True)
                     st.success(f"Hasil Prediksi: **Kelas {predicted_class}**")
-                    st.write(f"Tingkat Kepercayaan: **{confidence:.2f}**")
+                    st.write(f"Tingkat Kepercayaan Kelas Terpilih: **{confidence:.2f}**")
+
+                    # ==========================
+                    # Tampilkan probabilitas semua kelas
+                    # ==========================
+                    st.write("Probabilitas untuk semua kelas:")
+                    num_classes = prediction.shape[1]
+                    for i in range(num_classes):
+                        st.write(f"Kelas {i}: {prediction[0, i]:.4f}")
+
+                    # ==========================
+                    # Statistik model
+                    # ==========================
+                    total_params = classifier.count_params()
+                    trainable_params = np.sum([tf.keras.backend.count_params(w) for w in classifier.trainable_weights])
+                    non_trainable_params = total_params - trainable_params
+
+                    st.write("📊 Statistik Model:")
+                    st.write(f"Total parameter: {total_params}")
+                    st.write(f"Trainable parameter: {trainable_params}")
+                    st.write(f"Non-trainable parameter: {non_trainable_params}")
 
                 except Exception as e:
                     st.error(f"Terjadi kesalahan saat klasifikasi: {e}")
@@ -102,8 +132,6 @@ elif menu == "🧬 Klasifikasi Gambar":
             st.info("Silakan unggah gambar untuk memulai klasifikasi.")
     else:
         st.error("Model classifier belum berhasil dimuat.")
-
-
   
 # ==========================
 # 📚 FOOTER
