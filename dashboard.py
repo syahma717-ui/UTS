@@ -6,75 +6,74 @@ from PIL import Image
 import matplotlib.pyplot as plt
 
 # ==========================
-# 🎯 CONFIGURASI DASAR
+# 🌸 Konfigurasi Halaman
 # ==========================
-st.set_page_config(page_title="AI Vision Dashboard", page_icon="🧠", layout="wide")
+st.set_page_config(page_title="Aesthetic AI Dashboard", page_icon="💫", layout="wide")
 
 # ==========================
-# 🌈 CUSTOM CSS FUTURISTIK
+# 🎨 Custom CSS (Glassmorphism + Pastel Style)
 # ==========================
 st.markdown("""
     <style>
-    /* Background dan Font */
+    /* Background soft gradient */
     body {
-        background-color: #0f1116;
-        color: #e0e0e0;
-        font-family: 'Segoe UI', sans-serif;
+        background: linear-gradient(135deg, #f7f9ff 0%, #e7f0ff 50%, #f8f5ff 100%);
+        font-family: 'Poppins', sans-serif;
+        color: #333;
     }
 
-    /* Judul utama */
+    /* Title */
     .main-title {
         text-align: center;
         font-size: 42px;
-        font-weight: bold;
-        color: #00eaff;
-        text-shadow: 0 0 20px #00eaff;
-        margin-bottom: 10px;
+        font-weight: 700;
+        background: linear-gradient(90deg, #6a9cfb, #b07bff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: -10px;
     }
 
     /* Subtitle */
     .subtitle {
         text-align: center;
         font-size: 18px;
-        color: #b0b0b0;
+        color: #666;
         margin-bottom: 30px;
     }
 
     /* Sidebar */
     [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #0d0f14 0%, #12161e 100%);
-        border-right: 1px solid #00eaff50;
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(10px);
+        border-right: 1px solid #ddd;
     }
 
-    /* Tombol upload */
+    /* Upload box */
     div[data-testid="stFileUploader"] {
-        background: #161a24;
-        border-radius: 10px;
-        border: 2px dashed #00eaff80;
-        padding: 15px;
-    }
-
-    /* Gambar hasil */
-    img {
-        border-radius: 10px;
-        box-shadow: 0 0 20px #00eaff30;
-    }
-
-    /* Spinner */
-    .stSpinner > div {
-        color: #00eaff !important;
-    }
-
-    /* Card-style box */
-    .card {
-        background: #161a24;
+        background: rgba(255,255,255,0.6);
         border-radius: 15px;
+        border: 2px dashed #b5c7ff;
         padding: 20px;
-        box-shadow: 0 0 25px #00eaff20;
-        margin-bottom: 25px;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    div[data-testid="stFileUploader"]:hover {
+        border-color: #8aa8ff;
+        background: rgba(255,255,255,0.8);
     }
 
-    /* Diagram */
+    /* Card style */
+    .card {
+        background: rgba(255,255,255,0.5);
+        backdrop-filter: blur(12px);
+        border-radius: 20px;
+        padding: 25px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        margin-bottom: 25px;
+        border: 1px solid rgba(255,255,255,0.6);
+    }
+
+    /* Chart */
     canvas {
         border-radius: 10px;
     }
@@ -82,15 +81,28 @@ st.markdown("""
     /* Footer */
     .footer {
         text-align: center;
-        color: #777;
         font-size: 13px;
-        margin-top: 50px;
+        color: #777;
+        margin-top: 40px;
+    }
+
+    /* Buttons */
+    button[kind="primary"] {
+        background: linear-gradient(90deg, #82aaff, #b892ff) !important;
+        color: white !important;
+        border-radius: 10px !important;
+        border: none !important;
+    }
+
+    img {
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
     }
     </style>
 """, unsafe_allow_html=True)
 
 # ==========================
-# 🚀 LOAD MODEL
+# 🧠 Load Models
 # ==========================
 @st.cache_resource
 def load_models():
@@ -101,14 +113,14 @@ def load_models():
 yolo_model, classifier = load_models()
 
 # ==========================
-# 🧠 HEADER
+# 🌼 Header
 # ==========================
-st.markdown('<h1 class="main-title">🧠 AI Vision Dashboard</h1>', unsafe_allow_html=True)
-st.markdown('<p class="subtitle">Deteksi Objek & Klasifikasi Gambar — Futuristic Edition</p>', unsafe_allow_html=True)
+st.markdown('<h1 class="main-title">💫 Aesthetic AI Dashboard</h1>', unsafe_allow_html=True)
+st.markdown('<p class="subtitle">Deteksi Objek & Klasifikasi Gambar — Clean & Soft Style</p>', unsafe_allow_html=True)
 st.markdown("---")
 
 # ==========================
-# 🎛️ SIDEBAR
+# 🎛️ Sidebar
 # ==========================
 menu = st.sidebar.radio("Pilih Mode:", ["📦 Deteksi Objek (YOLO)", "🧬 Klasifikasi Gambar"])
 st.sidebar.info("Unggah gambar untuk memulai analisis")
@@ -116,27 +128,27 @@ st.sidebar.info("Unggah gambar untuk memulai analisis")
 uploaded_file = st.file_uploader("📤 Unggah Gambar", type=["jpg","jpeg","png"])
 
 # ==========================
-# ⚙️ PROSES GAMBAR
+# ⚙️ Proses Gambar
 # ==========================
 if uploaded_file is not None:
     img = Image.open(uploaded_file)
-    st.image(img, caption="🖼 Gambar yang diunggah", use_container_width=True)
+    st.image(img, caption="📸 Gambar yang diunggah", use_container_width=True)
     st.markdown("---")
 
     # ==========================
-    # 📦 YOLO DETEKSI
+    # 📦 Mode YOLO
     # ==========================
     if menu == "📦 Deteksi Objek (YOLO)":
-        with st.spinner("🔍 Sedang mendeteksi objek..."):
+        with st.spinner("✨ Mendeteksi objek..."):
             results = yolo_model(img)
             result_img = results[0].plot()
             st.image(result_img, caption="📦 Hasil Deteksi YOLO", use_container_width=True)
 
     # ==========================
-    # 🧬 KLASIFIKASI
+    # 🧬 Mode Klasifikasi
     # ==========================
     elif menu == "🧬 Klasifikasi Gambar":
-        with st.spinner("🧠 Sedang mengklasifikasikan gambar..."):
+        with st.spinner("🌸 Sedang mengklasifikasikan gambar..."):
             try:
                 H, W, C = classifier.input_shape[1:4]
                 img = img.convert('RGB') if C == 3 else img.convert('L')
@@ -150,20 +162,22 @@ if uploaded_file is not None:
                 predicted_class = np.argmax(prediction)
                 confidence = np.max(prediction)
 
-                st.markdown(f'<div class="card"><h3>🎯 Hasil Prediksi</h3>'
-                            f'<p><b>Kelas:</b> {predicted_class}</p>'
-                            f'<p><b>Tingkat Kepercayaan:</b> {confidence*100:.2f}%</p></div>',
-                            unsafe_allow_html=True)
+                # Card hasil prediksi
+                st.markdown(f"""
+                <div class="card">
+                    <h3>🌼 Hasil Klasifikasi</h3>
+                    <p><b>Kelas:</b> {predicted_class}</p>
+                    <p><b>Confidence:</b> {confidence*100:.2f}%</p>
+                </div>
+                """, unsafe_allow_html=True)
 
-                # Chart probabilitas
+                # Probabilitas kelas
                 class_probs = prediction[0]
                 classes = [f"Kelas {i}" for i in range(len(class_probs))]
                 fig, ax = plt.subplots()
-                ax.bar(classes, class_probs*100, color='#00eaff')
-                ax.set_ylabel("Probabilitas (%)", color='white')
-                ax.set_title("Distribusi Probabilitas", color='white')
-                ax.tick_params(colors='white')
-                fig.patch.set_facecolor('#161a24')
+                ax.bar(classes, class_probs*100, color='#91a8ff')
+                ax.set_ylabel("Probabilitas (%)")
+                ax.set_title("Distribusi Probabilitas")
                 st.pyplot(fig)
 
                 # Statistik Model
@@ -184,9 +198,9 @@ if uploaded_file is not None:
             except Exception as e:
                 st.error(f"Terjadi kesalahan saat klasifikasi: {e}")
 else:
-    st.info("💡 Silakan unggah gambar terlebih dahulu untuk memulai prediksi.")
+    st.info("🌷 Silakan unggah gambar untuk memulai prediksi.")
 
 # ==========================
-# ⚡ FOOTER
+# 🌸 Footer
 # ==========================
 st.markdown('<p class="footer">© 2025 | Dibuat oleh <b>Syahma</b> — Ujian Tengah Semester BIG DATA</p>', unsafe_allow_html=True)
